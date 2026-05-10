@@ -16,6 +16,7 @@ class ImplicitModel:
         self.user_encoder.fit(train_df["user_id"])
 
         self.train_ratings = self.create_matrix(train_df, ["item_id", "user_id"])
+
         self.model.fit(self.train_ratings)
         self.trained = True
 
@@ -45,9 +46,10 @@ class ImplicitModel:
         n_users = len(self.user_encoder.classes_)
 
         matrix_shape = (n_users, n_items)
+        weights = np.ones(len(encoded_user_ids), dtype=np.float32)
 
         sparse_matrix = csr_matrix(
-            (np.ones(len(encoded_user_ids)), (encoded_user_ids, encoded_item_ids)),
+            (weights, (encoded_user_ids, encoded_item_ids)),
             shape=matrix_shape,
             dtype=np.float32,
         )
