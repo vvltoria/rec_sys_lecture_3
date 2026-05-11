@@ -33,9 +33,14 @@ def main():
     train_df, test_df = prepare_data(df, min_interactions=10, test_days=30)
 
     print("3. Fitting model")
-    als_model = AlternatingLeastSquares(
-        factors=64, regularization=0.01, iterations=15, random_state=42
-    )
+    optuna_params = {
+        "factors": 32,
+        "regularization": 0.019053374904390664,
+        "iterations": 26,
+        "random_state": 42,
+    }
+
+    als_model = AlternatingLeastSquares(**optuna_params)
     recsys_model = ImplicitModel(als_model)
     recsys_model.fit(train_df)
 
