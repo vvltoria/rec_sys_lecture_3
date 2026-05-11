@@ -1,7 +1,9 @@
 import pandas as pd
 
 
-def prepare_data(df, min_interactions=10, test_days=30):
+def prepare_data(df, min_interactions=10, test_frac=0.2, max_test_items=5):
+    df = df[df["rating"] >= 4].copy()
+
     user_rating = df.groupby("user_id").size().reset_index(name="rating_quantity")
     item_rating = df.groupby("item_id").size().reset_index(name="rating_quantity")
 
@@ -15,16 +17,16 @@ def prepare_data(df, min_interactions=10, test_days=30):
     mask = (df["user_id"].isin(active_users)) & (df["item_id"].isin(active_films))
     filtered_df = df[mask].copy()
 
-    # max_date = filtered_df["last_watch_dt"].max()
-    # cut_off_date = max_date - test_days
-
-    # train_df = filtered_df[filtered_df["last_watch_dt"] < cut_off_date].copy()
-    # test_df = filtered_df[filtered_df["last_watch_dt"] >= cut_off_date].copy()
-
     filtered_df = filtered_df.sort_values(by=["user_id", "last_watch_dt"])
 
-    test_df = filtered_df.groupby("user_id").tail(5)
-    train_df = filtered_df.drop(test_df.index)
+    def get_test_indices(group):
+        n_test = max(1, min(max_test_items, int(len(group) * test_frac)))
+        return group.index[-n_test:]
+
+    test_indices = filtered_df.groupby("user_id").apply(get_test_indices).explode()
+
+    test_df = filtered_df.loc[test_indices].copy()
+    train_df = filtered_df.drop(test_indices).copy()
 
     train_users_ids = train_df["user_id"].unique()
     train_item_ids = train_df["item_id"].unique()
